@@ -22,7 +22,7 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
 // CORS
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: process.env.CLIENT_URL || 'https://shopyfix-frontend-git-main-maazulhaque26-ship-its-projects.vercel.app/',
   credentials: true,
 }));
 

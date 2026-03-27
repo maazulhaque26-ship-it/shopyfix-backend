@@ -26,8 +26,8 @@ const BRAND = {
   name:    process.env.STORE_NAME  || 'HomeKitchen',
   color:   '#FF9900',
   dark:    '#131921',
-  url:     process.env.CLIENT_URL  || 'http://localhost:5173',
-  support: process.env.MAIL_USER   || 'support@homekitchen.com',
+  url:     process.env.CLIENT_URL  || 'https://shopyfix-frontend-git-main-maazulhaque26-ship-its-projects.vercel.app/',
+  support: process.env.MAIL_USER  ,
 };
 
 // ── Transporter (created lazily — only when first email is sent)
