@@ -1,0 +1,1 @@
+[{"name":"cluster0.nlodt8z.mongodb.net.","type":16,"TTL":60,"data":"authSource=admin&replicaSet=atlas-897kj2-shard-0"}]
