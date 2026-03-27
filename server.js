@@ -23,8 +23,7 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 // CORS
 const corsOptions = {
   origin: [
-    process.env.CLIENT_URL || 'https://shopyfix-frontend.vercel.app', 
-    'http://localhost:5173'
+    'https://shopyfix-frontend.vercel.app'
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"] // Standard methods needed
