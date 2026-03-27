@@ -1,62 +1,83 @@
-const dotenv = require('dotenv');
+import express from "express";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import cors from "cors";
+
+import authRoutes from "./routes/authRoutes.js";
+// import any other route files below, e.g.:
+// import productRoutes from "./routes/productRoutes.js";
+
 dotenv.config();
-
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const cookieParser = require('cookie-parser');
-const rateLimit = require('express-rate-limit');
-const path = require('path');
-
-const connectDB = require('./config/db');
-const routes = require('./routes/index');
-const errorHandler = require('./middleware/error');
-
-connectDB();
 
 const app = express();
 
-// Security headers
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+// ─── Allowed Origins ────────────────────────────────────────────────────────
+const allowedOrigins = [
+  "http://localhost:5173",                         // local dev
+  "http://localhost:3000",                         // local dev (alt port)
+  "https://shopyfix-frontend.vercel.app",          // production Vercel
+  // Add any Vercel preview URLs here:
+  "https://shopyfix-frontend-n3pgmjmkd-maazulhaque26-ship-its-projects.vercel.app",
+];
 
-// CORS
-const corsOptions = {
-  origin: [
-    'https://shopyfix-frontend.vercel.app'
-  ],
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"] // Standard methods needed
-};
-app.use(cors(corsOptions));
+// ─── CORS Middleware ─────────────────────────────────────────────────────────
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (e.g. mobile apps, curl, Postman)
+      if (!origin) return callback(null, true);
 
-// Rate limiting
-const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 500 });
-app.use('/api/', limiter);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
 
-// Body parsing
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(cookieParser());
+      // Also allow ANY *.vercel.app preview URL dynamically
+      if (/\.vercel\.app$/.test(origin)) {
+        return callback(null, true);
+      }
 
-// Logging
-if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
+      return callback(new Error(`CORS policy: origin ${origin} not allowed`));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
-// Serve uploaded images
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// ─── Body Parsers ────────────────────────────────────────────────────────────
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Health check
-app.get('/api/health', (req, res) => res.json({ status: 'ok', env: process.env.NODE_ENV }));
+// ─── Routes ──────────────────────────────────────────────────────────────────
+app.use("/api/auth", authRoutes);
+// app.use("/api/products", productRoutes);  // add other routes here
 
-// Verify mailer connection on startup (non-blocking)
-const { verifyMailer } = require('./utils/mailer');
-verifyMailer();
+// ─── Health Check ────────────────────────────────────────────────────────────
+app.get("/", (req, res) => {
+  res.json({ message: "Shopifix API is running 🚀" });
+});
 
-// All routes
-app.use('/api', routes);
+// ─── 404 Handler ─────────────────────────────────────────────────────────────
+app.use((req, res) => {
+  res.status(404).json({ message: `Route not found: ${req.method} ${req.originalUrl}` });
+});
 
-// Global error handler
-app.use(errorHandler);
+// ─── Global Error Handler ────────────────────────────────────────────────────
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: err.message || "Internal Server Error" });
+});
 
+// ─── DB + Server Start ───────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("✅ MongoDB connected");
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB connection error:", err);
+    process.exit(1);
+  });
