@@ -1,4 +1,5 @@
 const Subscriber = require('../models/Subscriber');
+const { sendWelcomeNewsletter } = require('../utils/mailer');
 
 // @desc  Subscribe email (public)
 // @route POST /api/newsletter/subscribe
@@ -15,10 +16,20 @@ exports.subscribe = async (req, res, next) => {
       // Re-activate unsubscribed email
       existing.isActive = true;
       await existing.save();
+      // Send welcome-back email (fire-and-forget)
+      sendWelcomeNewsletter(email).catch(err =>
+        console.error('[Newsletter] Welcome-back email failed:', err.message)
+      );
       return res.json({ success: true, message: 'Welcome back! You have been re-subscribed.' });
     }
 
     await Subscriber.create({ email });
+
+    // Send welcome email (fire-and-forget — never blocks the response)
+    sendWelcomeNewsletter(email).catch(err =>
+      console.error('[Newsletter] Welcome email failed:', err.message)
+    );
+
     res.status(201).json({ success: true, message: 'Subscribed successfully! 🎉' });
   } catch (err) { next(err); }
 };

@@ -537,4 +537,58 @@ const verifyMailer = async () => {
   }
 };
 
-module.exports = { sendCustomerReceipt, sendAdminNotification, verifyMailer };
+// ────────────────────────────────────────────────────────────────
+// FUNCTION 3 — sendWelcomeNewsletter
+// Sends a welcome email when a user subscribes to the newsletter
+// ────────────────────────────────────────────────────────────────
+const sendWelcomeNewsletter = async (email) => {
+  try {
+    const body = `
+      <!-- Greeting -->
+      <h1 style="font-size: 26px; font-weight: 700; color: #1d1d1f;
+                 letter-spacing: -0.5px; line-height: 1.2; margin-bottom: 8px;">
+        Welcome to ${BRAND.name}! 🎉
+      </h1>
+      <p style="font-size: 15px; color: #515154; line-height: 1.6; margin-bottom: 20px;">
+        Thank you for subscribing to our newsletter. We're excited to have you on board! You'll be the first to hear about our latest products, exclusive offers, and behind-the-scenes updates.
+      </p>
+
+      <!-- CTA button -->
+      <div style="text-align: center; margin-bottom: 28px;">
+        <a href="${BRAND.url}"
+           style="display: inline-block; background: ${BRAND.color}; color: #fff;
+                  font-size: 15px; font-weight: 700; padding: 14px 36px;
+                  border-radius: 10px; text-decoration: none; letter-spacing: 0.2px;">
+          Explore Our Store →
+        </a>
+      </div>
+
+      <!-- Help note -->
+      <p style="font-size: 13px; color: #86868b; line-height: 1.6; text-align: center;">
+        If you have any questions, feel free to reply to this email or contact us at
+        <a href="mailto:${BRAND.support}" style="color: ${BRAND.color};">${BRAND.support}</a>
+      </p>
+    `;
+
+    const transporter = getTransporter();
+    const info = await transporter.sendMail({
+      from:    `"${BRAND.name}" <${process.env.MAIL_USER}>`,
+      to:      email,
+      subject: `Welcome to the ${BRAND.name} Newsletter! 🎉`,
+      html:    shell(body),
+      text: [
+        `Welcome to ${BRAND.name}! 🎉`,
+        `Thank you for subscribing to our newsletter.`,
+        `Explore our store: ${BRAND.url}`,
+      ].join('\n'),
+    });
+
+    console.log(`[Mailer] ✅ Welcome newsletter sent → ${email} (${info.messageId})`);
+    return { success: true, messageId: info.messageId };
+  } catch (err) {
+    console.error('[Mailer] ❌ sendWelcomeNewsletter failed:', err.message);
+    return { success: false, error: err.message };
+  }
+};
+
+module.exports = { sendCustomerReceipt, sendAdminNotification, sendWelcomeNewsletter, verifyMailer };
